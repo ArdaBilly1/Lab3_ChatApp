@@ -45,12 +45,14 @@ public class ClientFrame extends javax.swing.JFrame {
                         
                     } catch (RemoteException ex) {
                         Logger.getLogger(ClientFrame.class.getName()).log(Level.SEVERE, null, ex);
+                    } catch (Exception ex) {
+                        Logger.getLogger(ClientFrame.class.getName()).log(Level.SEVERE, null, ex);
                     }
                 }
             }
         });
        
-    public void get_new_messages() throws RemoteException {
+    public void get_new_messages() throws RemoteException, Exception {
         
         int numMsgToRecive = client.getNumMessages() - lastMsgRecived;
         System.out.println(client.getNumMessages() + " " + lastMsgRecived);
@@ -71,9 +73,10 @@ public class ClientFrame extends javax.swing.JFrame {
         }  
     }   
     
-    public void displayMsg(String message)
+    public void displayMsg(String message) throws Exception
     {
-        chatBox.append(message + "\n");
+//        client.displayMessage(message);
+        chatBox.append(message+"\n on decrypted= "+client.displayMessage(message)+ "\n");
     }
     
     /**
@@ -140,6 +143,8 @@ public class ClientFrame extends javax.swing.JFrame {
         try {
             client.sendMessage(msgText.getText());
         } catch (RemoteException ex) {
+            Logger.getLogger(ClientFrame.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (Exception ex) {
             Logger.getLogger(ClientFrame.class.getName()).log(Level.SEVERE, null, ex);
         }
     }//GEN-LAST:event_msgSendActionPerformed

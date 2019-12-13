@@ -2,7 +2,11 @@ package client;
 
 import server.*;
 import java.rmi.*;
+import java.util.Base64;
 import java.util.Calendar;
+import javax.crypto.Cipher;
+import javax.crypto.KeyGenerator;
+import javax.crypto.SecretKey;
 
 
 public class Client {
@@ -12,6 +16,9 @@ public class Client {
     ConnectFrame connectframe;
     ClientFrame clientframe;
     int lastMsgRecived;
+    static Cipher cipher;
+    String encryptedText;
+    SecretKey secretKey;
 
     public void init(){
         connectframe=new ConnectFrame(this);
@@ -35,13 +42,46 @@ public class Client {
     }
     
     public void sendMessage(String message) throws RemoteException
+            ,Exception
     {
+        
         java.util.Date date = new java.util.Date();
         String outgoing;
+        String enkrip;
         
-        outgoing = date.toString() + " ["+username+"]: " + message;
+        KeyGenerator keyGenerator = KeyGenerator.getInstance("AES");
+        keyGenerator.init(128);
+        secretKey = keyGenerator.generateKey();
+        cipher = Cipher.getInstance("AES");
+        
+        encryptedText = encrypt(message, secretKey);
+        
+        outgoing = date.toString() + " ["+username+"]: " + encryptedText;
         
         server.incoming_message(outgoing);
+    }
+    public String displayMessage(String message) throws Exception{
+        
+        String decrypted = decrypt(encryptedText, secretKey);
+        message = decrypted;
+        return message;
+    }
+    
+    private static String decrypt(String encryptedText, SecretKey secretKey) throws Exception {
+       Base64.Decoder decoder = Base64.getDecoder();
+       byte[] encryptedTextByte = decoder.decode(encryptedText);
+       cipher.init(Cipher.DECRYPT_MODE, secretKey);
+       byte[] decryptedByte = cipher.doFinal(encryptedTextByte);
+       String decryptedText = new String(decryptedByte);
+       return decryptedText;
+    }
+    private static String encrypt(String plainText, SecretKey secretKey) throws Exception {
+        byte[] plainTextByte = plainText.getBytes();
+        cipher.init(Cipher.ENCRYPT_MODE, secretKey);
+        byte[] encryptedByte = cipher.doFinal(plainTextByte);
+        Base64.Encoder encoder = Base64.getEncoder();
+        String encryptedText = encoder.encodeToString(encryptedByte);
+        return encryptedText;
     }
 
     public int getNumMessages() throws RemoteException{
